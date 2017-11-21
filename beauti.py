@@ -1,73 +1,92 @@
 from bs4 import BeautifulSoup 
-import requests, lxml, urllib3
+import requests 
+import lxml 
+import urllib3
 
-url = ['https://techcrunch.com/', 'https://thenextweb.com/latest/', 'http://www.foxnews.com/']
-
-allTitle = []
-allLinks =[]
-allImgLinks = []
-allDescription = []
 
 agents = {
 	'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
 }
 
 def scrape(url):
-	getPageData = requests.get(url, headers=agents)
-	return BeautifulSoup(getPageData.text, 'lxml')
+	get_page_data = requests.get(url, headers=agents)
+	return BeautifulSoup(get_page_data.text, 'lxml')
 
 def get_link(url):
 	i = 0
+	title_lists = []
+	link_lists = []
+
 	soup = scrape(url)	
-	# From techcrunch
-	myTitles = soup.findAll("h2", { "class" : "post-title" })
-	
-	# Deleting the video news from data 
-	for d in soup.findAll('div', {'class': 'block-video-in-river'}):
-		d.decompose()
-	
-	# Extracting links 
-	for title in myTitles:
-		for link in title.findAll("a", href=True):
-			links = title.a["href"]	
-			allLinks.append(links)
-		i = i + 1
-		if i == 10:
-			break		
+	# From techcrunch	
+	if "techcrunch" in url:
+		from_tech = soup.findAll("h2", { "class" : "post-title" })
+		# Deleting the video news from data 
+
+		# Extracting links 
+		for title in from_tech:
+			for data in title.findAll("a", href=True):
+				title = data.string.replace("\xa0", " ")
+				link = data["href"]	
+				title_lists.append(title)
+				link_lists.append(link)
+				i = i + 1
+			if i == 20:
+				break		
+	else:
+		print("Wrong Input")	
+
+	return (title_lists, link_lists)
 
 def get_data(url):
+	img_src = []
+	desc_lists = []
 	description = ''
 	soup = scrape(url)
+
+	content = soup.find("div", {"class", "article-entry"})
+	video_content = soup.find('div', {'class': 'vdb_player'})
+
+	if "techcrunch" in url:
+		if video_content:
+			soup.find("div", {"class", "article-entry"}).decompose()
+		else:	
+			#getting article image links
+			for image in content.findAll('img', {"class", ""}):
+				get_link = image["src"]
+				img_src.append(get_link)
+
+		# getting article description
+		for desc in content.findAll('p'):
+			get_desc = desc.text
+			for ch in ['\xa0','\u200a']:
+				if ch in get_desc:
+					get_desc = get_desc.replace(ch, " ")
+					description = description+'\n'+get_desc
+			
+	else:
+		print("not found")
 	
-	# getting article titles
-	my_title = soup.findAll("h1", {"class", "tweet-title"})
-	for title in my_title:
-		strTitle = title.string
-		allTitle.append(strTitle)
-
-	#getting article image links
-	myImgLinks = soup.find("div", {"class", "article-entry"}).findAll('img', {"class", ""})
-	for image in myImgLinks:
-		imgLinks = image["src"]
-		allImgLinks.append(imgLinks)
-
-	# getting article description
-	for desc in soup.find("div", {"class", "article-entry"}).findAll('p'):
-		newDesc = desc.text
-		description = description+'\n'+newDesc
-
-	allDescription.append(description)	
-
+	desc_lists.append(description)
+	return (img_src, desc_lists)
+	
 # Calling functions
-get_link(url[0])
-for i in range(len(allLinks)):
-	get_data(allLinks[i])
+def main():
+	url = ['https://techcrunch.com/popular/']
 
+	links = []
+	title = []
+	for address in url:
+		title, links = get_link(address)
 
-# print('links: ', allLinks,"\n \n")
-# print('title: ', allTitle,"\n \n")
-# for d in allDescription:
-# 	print('Desc: ', d,"\n \n")
-# print("desc: ", allDescription,"\n \n")
-# for i in allImgLinks:
-# 	print('imglink: ', i)
+	img_lists = []
+	description = []
+	for link in links:
+		img_lists, descrpition = get_data(link)
+
+	print(links)
+	print(title)
+	print(img_lists)
+	print(description)
+
+main()
