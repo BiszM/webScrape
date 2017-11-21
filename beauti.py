@@ -13,35 +13,29 @@ def scrape(url):
 	return BeautifulSoup(get_page_data.text, 'lxml')
 
 def get_link(url):
-	i = 0
-	title_lists = []
 	link_lists = []
 
 	soup = scrape(url)	
 	# From techcrunch	
 	if "techcrunch" in url:
-		from_tech = soup.findAll("h2", { "class" : "post-title" })
-		# Deleting the video news from data 
+		from_tech = soup.findAll("h2", { "class" : "post-title" })[:20]
 
 		# Extracting links 
-		for title in from_tech:
-			for data in title.findAll("a", href=True):
-				title = data.string.replace("\xa0", " ")
+		for data in from_tech:
+			for data in data.findAll("a", href=True):
 				link = data["href"]	
-				title_lists.append(title)
 				link_lists.append(link)
-				i = i + 1
-			if i == 20:
-				break		
 	else:
 		print("Wrong Input")	
 
-	return (title_lists, link_lists)
+	return (link_lists)
 
 def get_data(url):
+	title_lists = []
 	img_src = []
 	desc_lists = []
 	description = ''
+
 	soup = scrape(url)
 
 	content = soup.find("div", {"class", "article-entry"})
@@ -49,16 +43,19 @@ def get_data(url):
 
 	if "techcrunch" in url:
 		if video_content:
-			soup.find("div", {"class", "article-entry"}).decompose()
+			content.decompose()
 		else:	
+			for data in soup.find('title'): 
+				title = data.string.replace("\xa0", " ")
+				title_lists.append(title)
 			#getting article image links
-			for image in content.findAll('img', {"class", ""}):
-				get_link = image["src"]
+			for data in content.findAll('img', {"class", ""}):
+				get_link = data["src"]
 				img_src.append(get_link)
 
 		# getting article description
-		for desc in content.findAll('p'):
-			get_desc = desc.text
+		for data in content.findAll('p'):
+			get_desc = data.text
 			for ch in ['\xa0','\u200a']:
 				if ch in get_desc:
 					get_desc = get_desc.replace(ch, " ")
@@ -68,25 +65,25 @@ def get_data(url):
 		print("not found")
 	
 	desc_lists.append(description)
-	return (img_src, desc_lists)
+	return (title_lists, img_src, desc_lists)
 	
 # Calling functions
 def main():
 	url = ['https://techcrunch.com/popular/']
 
 	links = []
-	title = []
 	for address in url:
-		title, links = get_link(address)
+		links = get_link(address)
 
+	title_lists = []	
 	img_lists = []
-	description = []
+	desc_lists = []
 	for link in links:
-		img_lists, descrpition = get_data(link)
+		title_lists, img_lists, desc_lists = get_data(link)
 
 	print(links)
-	print(title)
+	print(title_lists)
 	print(img_lists)
-	print(description)
+	print(desc_lists)
 
 main()
