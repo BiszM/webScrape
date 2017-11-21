@@ -1,4 +1,4 @@
-import requests 
+import requests, re 
 import lxml 
 import urllib3
 from bs4 import BeautifulSoup 
@@ -11,4 +11,16 @@ def scrape(url):
 	return BeautifulSoup(get_page_data.text, 'lxml')
 
 soup = scrape('https://techcrunch.com/')
-print(soup.get_text())	
+
+data = soup.findAll('a')[:2]
+for d in data:
+	if 'href' in d.attrs:
+		print(d.attrs['href'])
+
+# # lambda expression
+# data = soup.findAll(lambda tag: len(tag.attrs) == 2)[:2]
+# print(data)
+# regular expression
+# images = soup.findAll('img',{'src':  re.compile('\.\.\/img\/gifts\/img.*\.jpg')})
+# for i in images:
+# 	print(i["src"])

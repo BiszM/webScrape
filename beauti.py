@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup 
 import requests 
 import lxml 
-import urllib3
+import urllib3, re
 
 
 agents = {
@@ -39,27 +39,33 @@ def get_data(url):
 	soup = scrape(url)
 
 	content = soup.find("div", {"class", "article-entry"})
+	title_content = soup.find('h1', {'class': 'tweet-title'})
 	video_content = soup.find('div', {'class': 'vdb_player'})
-
+	img_content = content.findAll('img', {"class", ""})
+	desc_content = content.findAll('p')
 	if "techcrunch" in url:
-		if video_content:
-			content.decompose()
+		if video_content or not(img_content) or not(desc_content) or not(title_content):
+			content.decompose()	
+
 		else:	
-			for data in soup.find('title'): 
+			for data in title_content: 
 				title = data.string.replace("\xa0", " ")
 				title_lists.append(title)
 			#getting article image links
-			for data in content.findAll('img', {"class", ""}):
+
+			for data in img_content:
 				get_link = data["src"]
 				img_src.append(get_link)
 
 		# getting article description
-		for data in content.findAll('p'):
+		for data in desc_content:
 			get_desc = data.text
-			for ch in ['\xa0','\u200a']:
-				if ch in get_desc:
-					get_desc = get_desc.replace(ch, " ")
-					description = description+'\n'+get_desc
+			get_desc = re.sub('[\\xa0][\\u200a]',' ', get_desc)
+			description = description+'\n'+get_desc
+			# for ch in ['\xa0','\u200a']:
+			# 	if ch in get_desc:
+			# 		get_desc = get_desc.replace(ch, " ")
+			# 		description = description+'\n'+get_desc
 			
 	else:
 		print("not found")
@@ -79,11 +85,17 @@ def main():
 	img_lists = []
 	desc_lists = []
 	for link in links:
-		title_lists, img_lists, desc_lists = get_data(link)
+		title, img, desc = get_data(link)
+		title_lists.append(title)
+		img_lists.append(img)
+		desc_lists.append(desc)
 
-	print(links)
-	print(title_lists)
-	print(img_lists)
-	print(desc_lists)
+	for t in title_lists:
+		print(t)
+	for t in img_lists:
+		print(t)
+	for t in desc_lists:
+		print(t)	
+	# print(desc_lists)
 
 main()
