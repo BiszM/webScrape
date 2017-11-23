@@ -50,28 +50,32 @@ def get_data(url):
 		else:	
 			for data in title_content: 
 				title = data.string.replace("\xa0", " ")
-				title_lists.append(title)
+				if title != '':
+					title_lists.append(title)
 			#getting article image links
 
 			for data in img_content:
 				get_link = data["src"]
-				img_src.append(get_link)
+				if img_content != '':
+					img_src.append(get_link)
 
 		# getting article description
 		for data in desc_content:
 			get_desc = data.text
-			get_desc = re.sub('[\\xa0][\\u200a]',' ', get_desc)
-			description = description+'\n'+get_desc
-			# for ch in ['\xa0','\u200a']:
-			# 	if ch in get_desc:
-			# 		get_desc = get_desc.replace(ch, " ")
-			# 		description = description+'\n'+get_desc
+			# get_new_desc = re.sub('[\xa0][\u200a]',' ', get_desc)
+			get_new_desc = get_desc.replace('\xa0', ' ')
+			if get_new_desc != '':
+				description = description+'\n'+get_new_desc
+
 			
 	else:
-		print("not found")
+		print("error url")
 	
 	desc_lists.append(description)
-	return (title_lists, img_src, desc_lists)
+	if not title_lists or not desc_content or not img_src:
+		return ('not', 'not', 'not')
+	else:
+		return (title_lists, img_src, desc_lists)
 	
 # Calling functions
 def main():
@@ -86,9 +90,12 @@ def main():
 	desc_lists = []
 	for link in links:
 		title, img, desc = get_data(link)
-		title_lists.append(title)
-		img_lists.append(img)
-		desc_lists.append(desc)
+		if title == 'not' or img == 'not' or desc == 'not':
+			print("not appended")
+		else:
+			title_lists.append(title)
+			img_lists.append(img)
+			desc_lists.append(desc)
 
 	for t in title_lists:
 		print(t)
